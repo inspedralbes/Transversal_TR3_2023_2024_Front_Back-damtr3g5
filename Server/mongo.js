@@ -57,7 +57,7 @@ async function insertElement(data, collection) {
         const col = db.collection(collection);
         col.insertOne(data, function (err, res) {
             if (err) throw err;
-            console.log("1 result inserted")
+            else return res.ops[0];
         })
     } catch (err) {
         console.log(err.stack);
