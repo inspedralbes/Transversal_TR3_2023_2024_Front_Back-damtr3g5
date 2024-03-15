@@ -16,19 +16,25 @@ const corsOptions = {
     preflightContinue: true,
     optionsSuccessStatus: 200,
 };
+
 const app = express();
-const port = process.env.PORT
-const SERVER_URL = process.env.SERVER
+const port = 8080
+const SERVER_URL = "localhost";
 const sessionMiddleware = require('./sessionMiddleware.js');
 
-app.use(cors(corsOptions));
+
+app.use(cors(corsOptions)); 
 app.use(sessionMiddleware);
 app.use(bodyParser.json());
 app.use(express.json())
 app.use(express.static('images'))
+const server = http.createServer(app);
+const { initializeSocket} = require("./sockets.js");
+
+initializeSocket(server,{ cors: corsOptions });
 
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Server listening at ${SERVER_URL}:${port}`);
 });
 
