@@ -48,10 +48,11 @@ app.post('/addskin', upload.single('file'), async (req, res) => {
     const archivo = req.file;
     const carpeta = req.body.folder;
     const idPersonaje = req.body.id;
+    const skinName = req.body.name;
     const subida = await utils.uploadFile(archivo, carpeta);
     res.json(utils.respuesta(subida));
-    if(subida)
-        controladora.addCharacterSkin(idPersonaje, subida.name);
+    if(subida.hasOwnProperty("name"))
+        controladora.addSkin(subida.name, skinName, idPersonaje);
 });
 /*--Gestion de imagenes--*/
 
@@ -60,3 +61,5 @@ app.get("/getsprites", (req, res) => {
     const imageNames = utils.getImageNames(filePath);
     res.send(imageNames);
 });
+
+

@@ -17,7 +17,7 @@ const uploadFile = async (file, folder) => {
                 if (err) {
                     reject({ error: 'Error al subir el archivo.' });
                 } else {
-                    resolve({ message: 'Archivo subido correctamente.', name: fileName });
+                    resolve({ message: 'Archivo subido correctamente.', name: folder+"/"+fileName });
                 }
             });
         })

@@ -1,6 +1,9 @@
 const mongo = require('./mongo.js');
-module.exports = {getCharacter, updateCharacter, deleteCharacter, insertCharacter, getWeapon, updateWeapon, deleteWeapon, insertWeapon, getUser, updateUser, deleteUser, insertUser
-, updateCharacterParameters};
+const ObjectId = require("mongodb").ObjectId;
+module.exports = {
+    getCharacter, updateCharacter, deleteCharacter, insertCharacter, getWeapon, updateWeapon, deleteWeapon, insertWeapon, getUser, updateUser, deleteUser, insertUser
+    , updateCharacterParameters, addSkin
+};
 
 async function getCharacter(id) {
     try {
@@ -108,12 +111,30 @@ async function insertUser(data) {
         console.log(err.stack);
     }
 }
-async function addSkin(skin, character) {
+async function addSkin(skin, skinName, idCharacter) {
     try {
-        const skinInsertada = mongo.insertElement(skin,"Skin");
-        const personaje = mongo.getCollection("Character", { "_id": skinInsertada })[0];
-        return document;
+        console.log(skin, skinName, idCharacter);
+        await mongo.insertElement({ name: skinName, path: skin }, "Skin");
+        const res = await mongo.getCollection("Skin", { "name": skinName });
+        const skinInsertadaId = res[0]._id;
+        let personaje = await mongo.getElement("Character", "_id", new ObjectId(idCharacter));
+        personaje.skins.push(skinInsertadaId);
+        await mongo.updateElement("Character", "_id", new ObjectId(idCharacter), personaje);
+        //return document;
     } catch (err) {
         console.log(err.stack);
     }
 }
+/*{
+  "_id": {
+    "$oid": "65f2bb52231b4346440019a2"
+  },
+  "name": "MainCharacter",
+  "hp": 100,
+  "speed": 5,
+  "skins": [
+    {
+      "$oid": "65f409dd19eed22c1e68b72b"
+    }
+  ]
+}*/
