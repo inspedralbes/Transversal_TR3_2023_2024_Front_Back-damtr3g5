@@ -2,7 +2,7 @@ const mongo = require('./mongo.js');
 const ObjectId = require("mongodb").ObjectId;
 module.exports = {
     getCharacter, updateCharacter, deleteCharacter, insertCharacter, getWeapon, updateWeapon, deleteWeapon, insertWeapon, getUser, updateUser, deleteUser, insertUser
-    , updateCharacterParameters, addSkin, changeSkin, changeCharacterParameters, changeValueGeneric
+    , updateCharacterParameters, addSkin, changeSkinParameters, changeCharacterParameters, changeValueGeneric, changeWeaponParameters
 };
 
 async function getCharacter(id) {
@@ -133,7 +133,7 @@ async function changeValueGeneric(id, collection, parameter, newValue) {
         console.log(err.stack);
     }
 }
-async function changeSkin(id, parameter, newSkin) {
+async function changeSkinParameters(id, parameter, newSkin) {
     try {
         const skin = await mongo.getElement("Skin", "_id", new ObjectId(id));
         skin[parameter]=newSkin;
@@ -146,6 +146,11 @@ function changeCharacterParameters(id, parameter, newValue) {
     const personaje = mongo.getCollection("Character", { "_id": new ObjectId(id) })[0];
     personaje[parameter] = newValue;
     mongo.updateElement("Character", "_id", new ObjectId(id), personaje);
+}
+function changeWeaponParameters(id, parameter, newValue) {
+    const personaje = mongo.getCollection("Weapon", { "_id": new ObjectId(id) })[0];
+    personaje[parameter] = newValue;
+    mongo.updateElement("Weapon", "_id", new ObjectId(id), personaje);
 }
 /*{
   "_id": {

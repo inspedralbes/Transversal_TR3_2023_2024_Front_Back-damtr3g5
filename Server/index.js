@@ -61,5 +61,12 @@ app.get("/getsprites", (req, res) => {
     const imageNames = utils.getImageNames(filePath);
     res.send(imageNames);
 });
-
+app.post("/changeParams",(req,res)=>{
+    const collection = req.body.collection
+    const param = req.body.param
+    const newValue = req.body.newValue
+    const id = req.body.id
+    controladora.changeValueGeneric(id,collection,param,newValue);
+    res.json({'collection':collection,'parameter':param,'value':newValue});
+})
 
