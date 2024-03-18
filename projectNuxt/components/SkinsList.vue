@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import _ from 'lodash';
-var items = [
+var items = [/*
     {
         id: 1,
         name: 'default',
@@ -49,14 +49,28 @@ var items = [
         name: 'skin 7',
         price: 1004,
         image: 'character-sheet.png'
-    }
+    }*/
 ]
+var activeItems = [];
+async function getSkins() {
+    const todo = await $fetch('http://localhost:3450/getData?collection=Character&name=MainCharacter', {
+    method: 'GET'
+  })
+  console.log(todo[0].skins);
+  
+    items = todo[0].skins;
+    activeItems = ref(_.cloneDeep(items));
+    console.log(items);
+    console.log(activeItems);
+}
+
+getSkins();
 var itemToAdd = ref({
     name: '',
     price: '',
     image: []
 })
-var activeItems = ref(_.cloneDeep(items));
+
 var selectedItem : any = ref([null]);
 function updateSelectedItemName(item : any, event : any) {
     item.name = event.target.innerText;
