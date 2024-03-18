@@ -56,9 +56,9 @@ app.post('/addskin', upload.single('file'), async (req, res) => {
 });
 /*--Gestion de imagenes--*/
 
-app.post("/getData",async (req, res) => {
-    const collection = req.body.collection;
-    const name = req.body.name;
+app.get("/getData",async (req, res) => {
+    const collection = req.query.collection;
+    const name = req.query.name;
     let data = []
     if (name && collection) {        
         data = await controladora.objectData(collection, name); 
