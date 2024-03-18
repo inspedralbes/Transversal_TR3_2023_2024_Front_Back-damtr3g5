@@ -43,10 +43,22 @@ var items = [
         price: 100,
         image: 'character-sheet.png'
     }
+    ,
+    {
+        id: 8,
+        name: 'skin 7',
+        price: 1004,
+        image: 'character-sheet.png'
+    }
 ]
+var itemToAdd = ref({
+    name: '',
+    price: '',
+    image: []
+})
 var activeItems = ref(_.cloneDeep(items));
-var selectedItem = ref(activeItems.value[0]);
-function updateSelectedItemName(item, event) {
+var selectedItem : any = ref([null]);
+function updateSelectedItemName(item : any, event : any) {
     item.name = event.target.innerText;
 
 }
@@ -60,6 +72,19 @@ function checkChanges() {
         }
     }
 }
+function saveChanges() {
+    const isEqual = _.isEqual(items, activeItems.value);
+    if (!isEqual) {
+        items = _.cloneDeep(activeItems.value);
+    }
+}
+function checkFields(){
+    if(itemToAdd.value.name === '' || itemToAdd.value.price === '' || itemToAdd.value.image.length === 0){
+        return true;
+    }
+    return false;
+}
+var window = false;
 </script>
 <template>
     <v-card>
@@ -69,9 +94,14 @@ function checkChanges() {
         <v-card-text>
             <v-row>
                 <v-col cols="3">
-                    <v-list v-model:selected="selectedItem" height="600" rounded="lg" lines="three">
-                        <v-list-item @click="checkChanges" style="border: 1px solid black;" active-class="listactive"
-                            variant="plain" v-for="(item, i) in activeItems" :key="i" :value="item">
+                    <v-list v-model:selected="selectedItem" height="694" rounded="lg" lines="three">
+                        <v-list-item
+                            style="border: 1px solid black;  justify-items: center;"
+                             variant="tonal" color="green" @click="window = true" :value="null">
+                            <v-list-item-title><v-icon icon="mdi-plus" size="x-large"></v-icon></v-list-item-title>
+                        </v-list-item>
+                        <v-list-item @click="checkChanges" style="border: 1px solid black;" color="primary"
+                             v-for="(item, i) in activeItems" :key="i" :value="item">
                             <v-list-item-title>{{ item.name }}</v-list-item-title>
                         </v-list-item>
                     </v-list>
@@ -92,14 +122,24 @@ function checkChanges() {
                         </v-col>
                         <v-col cols="6">
                             <input type="file">
-                            <v-text-field label="Price" v-model="selectedItem[0].price" type="text"></v-text-field>
-                            <v-btn color="primary" @click="console.log(activeItems, items)">Save</v-btn>
+                            <v-text-field label="Preu" v-model="selectedItem[0].price" type="text"></v-text-field>
+                            <v-btn color="primary" @click="saveChanges">Save</v-btn>
                         </v-col>
                     </v-row>
 
                 </v-col>
                 <v-col style="display: flex; justify-content: center; align-items: center;" cols="9" v-else>
-                    <h1><v-icon icon="mdi-information"></v-icon>Selecciona una skin</h1>
+                    <v-row v-if="window">
+
+                        <v-col>
+
+                            <v-text-field v-model="itemToAdd.name" label="Nom" type="text"></v-text-field>
+                            <v-text-field v-model="itemToAdd.price" label="Preu" type="text"></v-text-field>
+                            <v-file-input v-model="itemToAdd.image" label="Skin" counter show-size></v-file-input>
+                            <v-btn @click="console.log(itemToAdd)" :disabled="checkFields()" color="primary">Save</v-btn>
+                        </v-col>
+                    </v-row>
+                    <h1 v-else><v-icon icon="mdi-information"></v-icon>Selecciona una skin</h1>
                 </v-col>
             </v-row>
 
@@ -107,10 +147,6 @@ function checkChanges() {
     </v-card>
 </template>
 <style scoped>
-.listactive {
-    background-color: #f09898;
-}
-
 [contenteditable] {
     outline: 0px solid transparent;
 }
