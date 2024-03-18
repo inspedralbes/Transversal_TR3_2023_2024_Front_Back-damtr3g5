@@ -1,32 +1,39 @@
 const WebSocket = require('ws');
+var uuid = require('uuid-random');
 
+var playersData = {
+	"type" : "playerData"
+}
 
+//=====WEBSOCKET FUNCTIONS======
 function initializeSocket(server) {
-    const wss = new WebSocket.Server({server});
+    const wss = new WebSocket.Server({ server });
 
-wss.on('connection', (ws) => {
+    wss.on('connection', handleConnection);
+}
+
+function handleConnection(ws) {
+    ws.id = uuid();
     console.log('Client connected');
 
-    ws.on('message', (message) => {
-        console.log('Received: %s', message);
+    var currentClient = playersData[""+ws.id]
+    ws.send(`{"id": "${ws.id}"}`)
 
-        // Handle incoming messages here
-        handleMessage(message);
-    });
+    ws.on('message', handleMessage);
 
     ws.on('close', () => {
         console.log('Client disconnected');
     });
-});
 }
 
-
 function handleMessage(message) {
-    // Implement logic to handle different types of messages
-    // Example: parse JSON message and handle different message types
+    
     try {
         const data = JSON.parse(message);
+        console.log(data);
         switch (data.type) {
+            case 'join':
+                break;
             case 'movement':
                 handleMovement(data);
                 break;
@@ -50,4 +57,4 @@ function handleAction(data) {
     // Implement logic to handle player actions
 }
 
-module.exports = { initializeSocket};
+module.exports = { initializeSocket };
