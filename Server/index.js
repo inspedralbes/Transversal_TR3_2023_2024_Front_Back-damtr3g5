@@ -56,10 +56,16 @@ app.post('/addskin', upload.single('file'), async (req, res) => {
 });
 /*--Gestion de imagenes--*/
 
-app.get("/getsprites", (req, res) => {
-    const filePath = path.join(__dirname, 'skins');
-    const imageNames = utils.getImageNames(filePath);
-    res.send(imageNames);
+app.post("/getData",async (req, res) => {
+    const collection = req.body.collection;
+    const name = req.body.name;
+    let data = []
+    if (name && collection) {        
+        data = await controladora.objectData(collection, name); 
+    }else{
+        data = await controladora.objectData();
+    }
+    res.json(data);
 });
 app.post("/changeParams",(req,res)=>{
     const collection = req.body.collection
