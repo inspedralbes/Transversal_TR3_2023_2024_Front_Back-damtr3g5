@@ -20,6 +20,7 @@ const app = express();
 const port = process.env.PORT
 const SERVER_URL = process.env.SERVER
 const sessionMiddleware = require('./sessionMiddleware.js');
+const { getEnabledCategories } = require('trace_events');
 
 app.use(cors(corsOptions));
 app.use(sessionMiddleware);
@@ -49,10 +50,13 @@ app.post('/addskin', upload.single('file'), async (req, res) => {
     const carpeta = req.body.folder;
     const idPersonaje = req.body.id;
     const skinName = req.body.name;
-    const subida = await utils.uploadFile(archivo, carpeta);
-    res.json(utils.respuesta(subida));
-    if(subida.hasOwnProperty("name"))
+    const subida = await utils.uploadFile(archivo, carpeta);    
+    if(subida.hasOwnProperty("name")){        
+        res.status(200).json(utils.respuesta(subida));
         controladora.addSkin(subida.name, skinName, idPersonaje);
+    }else{
+        res.status(400).json(utils.respuesta(subida));
+    }
 });
 /*--Gestion de imagenes--*/
 
