@@ -48,11 +48,15 @@ app.post('/addskin', upload.single('file'), async (req, res) => {
     const archivo = req.file;
     const carpeta = req.body.folder;
     const idPersonaje = req.body.id;
-    const skinName = req.body.name;
+    const skin = {
+        name : req.body.name,
+        price: req.body.price,
+    }
+    console.log(skin);
     const subida = await utils.uploadFile(archivo, carpeta);
     res.json(utils.respuesta(subida));
     if(subida.hasOwnProperty("name"))
-        controladora.addSkin(subida.name, skinName, idPersonaje);
+        controladora.addSkin(subida.name, skin, idPersonaje);
 });
 /*--Gestion de imagenes--*/
 

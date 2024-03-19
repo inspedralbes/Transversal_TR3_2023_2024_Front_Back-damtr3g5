@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
-var items = [/*
+const URL = 'http://localhost:3450';
+var items: any = [/*
     {
         id: 1,
         name: 'default',
@@ -51,28 +52,22 @@ var items = [/*
         image: 'character-sheet.png'
     }*/
 ]
-var activeItems = [];
-async function getSkins() {
-    const todo = await $fetch('http://localhost:3450/getData?collection=Character&name=MainCharacter', {
-    method: 'GET'
-  })
-  console.log(todo[0].skins);
-  
-    items = todo[0].skins;
-    activeItems = ref(_.cloneDeep(items));
-    console.log(items);
-    console.log(activeItems);
-}
+var activeItems: any = [];
 
-getSkins();
+const { data, pending, error, refresh } = await useFetch(URL+'/getData?collection=Character&name=MainCharacter', {
+    method: 'GET'
+})
+items = (data.value as any)[0].skins;
+activeItems = ref(_.cloneDeep(items));
+const id : string = (data.value as any)[0]._id;
 var itemToAdd = ref({
     name: '',
     price: '',
     image: []
 })
 
-var selectedItem : any = ref([null]);
-function updateSelectedItemName(item : any, event : any) {
+var selectedItem: any = ref([null]);
+function updateSelectedItemName(item: any, event: any) {
     item.name = event.target.innerText;
 
 }
@@ -92,11 +87,33 @@ function saveChanges() {
         items = _.cloneDeep(activeItems.value);
     }
 }
-function checkFields(){
-    if(itemToAdd.value.name === '' || itemToAdd.value.price === '' || itemToAdd.value.image.length === 0){
+function checkFields() {
+    if (itemToAdd.value.name === '' || itemToAdd.value.price === '' || itemToAdd.value.image.length === 0) {
         return true;
     }
     return false;
+}
+async function addSkin() {
+    console.log(itemToAdd.value.image[0]);
+    const formData = new FormData();
+    formData.append('file', itemToAdd.value.image[0]);
+    formData.append('name', itemToAdd.value.name);
+    formData.append('price', itemToAdd.value.price);
+    formData.append('folder', 'mainCharacter');
+    formData.append('id', id);
+    //formData.append('price', itemToAdd.value.price);
+    for(var pair of formData.entries()) {
+        console.log(pair[0]+ ', '+ pair[1]);
+    }
+    const result = await $fetch(URL + '/addskin', {
+        method: 'POST',
+        body: formData
+    });
+    console.log(result);
+    if (result.status === 200) {
+        refresh();
+        window = false;
+    }
 }
 var window = false;
 </script>
@@ -109,13 +126,12 @@ var window = false;
             <v-row>
                 <v-col cols="3">
                     <v-list v-model:selected="selectedItem" height="694" rounded="lg" lines="three">
-                        <v-list-item
-                            style="border: 1px solid black;  justify-items: center;"
-                             variant="tonal" color="green" @click="window = true" :value="null">
+                        <v-list-item style="border: 1px solid black;  justify-items: center;" variant="tonal"
+                            color="green" @click="window = true" :value="null">
                             <v-list-item-title><v-icon icon="mdi-plus" size="x-large"></v-icon></v-list-item-title>
                         </v-list-item>
                         <v-list-item @click="checkChanges" style="border: 1px solid black;" color="primary"
-                             v-for="(item, i) in activeItems" :key="i" :value="item">
+                            v-for="(item, i) in activeItems" :key="i" :value="item">
                             <v-list-item-title>{{ item.name }}</v-list-item-title>
                         </v-list-item>
                     </v-list>
@@ -132,7 +148,7 @@ var window = false;
                     </v-row>
                     <v-row>
                         <v-col cols="6">
-                            <img :src="`/${selectedItem[0]?.image}`" alt="skin" height="600">
+                            <img :src="`${URL}/imagen/${selectedItem[0]?.path}`" alt="skin" height="600">
                         </v-col>
                         <v-col cols="6">
                             <input type="file">
@@ -149,8 +165,9 @@ var window = false;
 
                             <v-text-field v-model="itemToAdd.name" label="Nom" type="text"></v-text-field>
                             <v-text-field v-model="itemToAdd.price" label="Preu" type="text"></v-text-field>
-                            <v-file-input v-model="itemToAdd.image" label="Skin" counter show-size></v-file-input>
-                            <v-btn @click="console.log(itemToAdd)" :disabled="checkFields()" color="primary">Save</v-btn>
+                            <v-file-input v-model="itemToAdd.image" accept="image/*" label="Skin" counter show-size></v-file-input>
+                            <v-btn @click="addSkin" :disabled="checkFields()"
+                                color="primary">Save</v-btn>
                         </v-col>
                     </v-row>
                     <h1 v-else><v-icon icon="mdi-information"></v-icon>Selecciona una skin</h1>

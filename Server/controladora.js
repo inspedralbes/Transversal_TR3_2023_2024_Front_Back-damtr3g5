@@ -111,10 +111,10 @@ async function insertUser(data) {
         console.log(err.stack);
     }
 }
-async function addSkin(skin, skinName, idCharacter) {
+async function addSkin(path, skin, idCharacter) {
     try {
-        await mongo.insertElement({ name: skinName, path: skin }, "Skin");
-        const res = await mongo.getCollection("Skin", { "name": skinName });
+        await mongo.insertElement({ name: skin.name, price: skin.price, path: path }, "Skin");
+        const res = await mongo.getCollection("Skin", { "name": skin.name });
         const skinInsertadaId = res[0]._id;
         let personaje = await mongo.getElement("Character", "_id", new ObjectId(idCharacter));
         personaje.skins.push(skinInsertadaId);
