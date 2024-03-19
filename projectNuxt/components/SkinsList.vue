@@ -105,15 +105,15 @@ async function addSkin() {
     for(var pair of formData.entries()) {
         console.log(pair[0]+ ', '+ pair[1]);
     }
-    const result = await $fetch(URL + '/addskin', {
+    await $fetch(URL + '/addskin', {
         method: 'POST',
         body: formData
+    }).catch((error) => {
+        console.log(error);
+    }).then((result) => {
+        console.log(result);
+        reloadNuxtApp();
     });
-    console.log(result);
-    if (result.status === 200) {
-        refresh();
-        window = false;
-    }
 }
 var window = false;
 </script>

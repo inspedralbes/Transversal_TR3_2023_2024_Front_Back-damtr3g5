@@ -56,8 +56,12 @@ app.post('/addskin', upload.single('file'), async (req, res) => {
     console.log(skin);
     const subida = await utils.uploadFile(archivo, carpeta);
     if(subida.hasOwnProperty("name")){        
-        res.status(200).json(utils.respuesta(subida));
-        controladora.addSkin(subida.name, skinName, idPersonaje);
+        
+        controladora.addSkin(subida.name, skin, idPersonaje).then((response) => {
+            res.status(200).json(utils.respuesta(subida));
+        }).catch((err) => {
+            res.status(400).json(utils.respuesta(err));
+        });
     }else{
         res.status(400).json(utils.respuesta(subida));
     }
