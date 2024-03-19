@@ -1,7 +1,7 @@
 const mongo = require('./mongo.js');
 const ObjectId = require("mongodb").ObjectId;
 module.exports = {
-    getCharacter, updateCharacter, deleteCharacter, insertCharacter, getWeapon, updateWeapon, deleteWeapon, insertWeapon, getUser, updateUser, deleteUser, insertUser
+    getCharacter, updateCharacter, deleteCharacter, insertCharacter, getWeapon, updateWeapon, deleteWeapon, insertWeapon, getUser, updateUser, getSkin, deleteUser, insertUser
     , updateCharacterParameters, addSkin, changeSkinParameters, changeCharacterParameters, changeValueGeneric, changeWeaponParameters,objectData
 };
 
@@ -88,6 +88,16 @@ async function getUser(id) {
         console.log(err.stack);
     }
 }
+
+async function getSkin(id) {
+    try {
+        const document = mongo.getCollection("Skin", { "_id": new ObjectId(id) });
+        return document;
+    } catch (err) {
+        console.log(err.stack);
+    }
+}
+
 async function updateUser(id, data) {
     try {
         const document = mongo.updateElement("User", "_id", id, data);

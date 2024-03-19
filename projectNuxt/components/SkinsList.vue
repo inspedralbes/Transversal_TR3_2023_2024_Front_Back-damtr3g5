@@ -75,6 +75,7 @@ function checkChanges() {
     const isEqual = _.isEqual(items, activeItems.value);
     if (!isEqual) {
         if (confirm("No has desat els canvis, els vols guardar?") == true) {
+            updateSkin();
             items = _.cloneDeep(activeItems.value);
         } else {
             activeItems = ref(_.cloneDeep(items));
@@ -84,6 +85,7 @@ function checkChanges() {
 function saveChanges() {
     const isEqual = _.isEqual(items, activeItems.value);
     if (!isEqual) {
+        updateSkin();
         items = _.cloneDeep(activeItems.value);
     }
 }
@@ -96,9 +98,9 @@ function checkFields() {
 async function addSkin() {
     console.log(itemToAdd.value.image[0]);
     const formData = new FormData();
-    formData.append('file', itemToAdd.value.image[0]);
-    formData.append('name', itemToAdd.value.name);
-    formData.append('price', itemToAdd.value.price);
+    formData.append('file', activeItems.value.image[0]);
+    formData.append('name', activeItems.value.name);
+    formData.append('price', activeItems.value.price);
     formData.append('folder', 'mainCharacter');
     formData.append('id', id);
     //formData.append('price', itemToAdd.value.price);
@@ -114,6 +116,28 @@ async function addSkin() {
         console.log(result);
         reloadNuxtApp();
     });
+}
+async function updateSkin() {
+    const formData = new FormData();
+    console.log(selectedItem.value[0]);
+    if(selectedItem.value[0].image)formData.append('file', selectedItem.value[0].image[0]);
+    formData.append('name', selectedItem.value[0].name);
+    formData.append('price', selectedItem.value[0].price);
+    formData.append('folder', 'mainCharacter');
+    formData.append('id', selectedItem.value[0]._id);
+    //formData.append('price', itemToAdd.value.price);
+    for(var pair of formData.entries()) {
+        console.log(pair[0]+ ', '+ pair[1]);
+    }
+    await $fetch(URL + '/updateskin', {
+        method: 'POST',
+        body: formData
+    }).catch((error) => {
+        console.log(error);
+    }).then((result) => {
+        console.log(result);
+    });
+
 }
 var window = false;
 </script>
@@ -151,7 +175,7 @@ var window = false;
                             <img :src="`${URL}/imagen/${selectedItem[0]?.path}`" alt="skin" height="600">
                         </v-col>
                         <v-col cols="6">
-                            <input type="file">
+                            <v-file-input v-model="selectedItem[0].image" accept="image/*" label="Skin" counter show-size></v-file-input>
                             <v-text-field label="Preu" v-model="selectedItem[0].price" type="text"></v-text-field>
                             <v-btn color="primary" @click="saveChanges">Save</v-btn>
                         </v-col>

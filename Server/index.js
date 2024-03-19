@@ -50,41 +50,72 @@ app.post('/addskin', upload.single('file'), async (req, res) => {
     const carpeta = req.body.folder;
     const idPersonaje = req.body.id;
     const skin = {
-        name : req.body.name,
+        name: req.body.name,
         price: req.body.price,
     }
     console.log(skin);
     const subida = await utils.uploadFile(archivo, carpeta);
-    if(subida.hasOwnProperty("name")){        
-        
+    if (subida.hasOwnProperty("name")) {
+
         controladora.addSkin(subida.name, skin, idPersonaje).then((response) => {
             res.status(200).json(utils.respuesta(subida));
         }).catch((err) => {
             res.status(400).json(utils.respuesta(err));
         });
-    }else{
+    } else {
         res.status(400).json(utils.respuesta(subida));
     }
 });
+app.post('/updateskin', upload.single('file'), async (req, res) => {
+    const skin = {
+        id: req.body.id,
+        name: req.body.name,
+        price: req.body.price,
+    }
+    if (skin.name) controladora.changeSkinParameters(skin.id, 'name', skin.name);
+    if (skin.price) controladora.changeSkinParameters(skin.id, 'price', skin.price);
+    if (req.file) {
+        console.log("hola")
+        const archivo = req.file;
+        const carpeta = req.body.folder;
+        controladora.getSkin(skin.id).then((response) => {
+            originalname = response[0].path.split('/')[1];
+            console.log(originalname);
+            archivo.originalname = originalname;
+            const subida = utils.uploadFile(archivo, carpeta);
+            if (subida.hasOwnProperty("name")) {
+
+                controladora.addSkin(subida.name, skin, idPersonaje).then((response) => {
+                    res.status(200).json(utils.respuesta(subida));
+                }).catch((err) => {
+                    res.status(400).json(utils.respuesta(err));
+                });
+            } else {
+                res.status(400).json(utils.respuesta(subida));
+            }
+        });
+    }
+    res.status(200).json({ message: 'Skin actualizada correctamente.' });
+});
 /*--Gestion de imagenes--*/
 
-app.get("/getData",async (req, res) => {
+app.get("/getData", async (req, res) => {
     const collection = req.query.collection;
     const name = req.query.name;
     let data = []
-    if (name && collection) {        
-        data = await controladora.objectData(collection, name); 
-    }else{
+    if (name && collection) {
+        data = await controladora.objectData(collection, name);
+    } else {
         data = await controladora.objectData();
     }
     res.json(data);
 });
-app.post("/changeParams",(req,res)=>{
+app.post("/changeParams", (req, res) => {
     const collection = req.body.collection
     const param = req.body.param
     const newValue = req.body.newValue
     const id = req.body.id
-    controladora.changeValueGeneric(id,collection,param,newValue);
-    res.json({'collection':collection,'parameter':param,'value':newValue});
+    controladora.changeValueGeneric(id, collection, param, newValue);
+    res.json({ 'collection': collection, 'parameter': param, 'value': newValue });
 })
 
