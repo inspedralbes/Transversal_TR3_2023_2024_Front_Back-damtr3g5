@@ -65,7 +65,7 @@ function handleMessage(message) {
     try {
         const data = JSON.parse(message);
         console.log(data);
-        switch (data.type) {
+        switch (data.event) {
             case 'updatePosition':
                 handlePosition(data)
                 break;
@@ -100,7 +100,7 @@ function handlePosition(data) {
         }
     };
     
-    broadcastExceptSender(ws.id, newPosiitionData);
+    broadcastExceptSender(data.id, newPosiitionData);
 }
 function handleMovement(data) {
     // Implement logic to handle player movement
