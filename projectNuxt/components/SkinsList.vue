@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import _ from 'lodash';
 const URL = 'http://localhost:3450';
+const props = defineProps({
+    data: {
+    required: true,
+  }
+});
+const { data } = props;
 var items: any = [/*
     {
         id: 1,
@@ -53,13 +59,9 @@ var items: any = [/*
     }*/
 ]
 var activeItems: any = [];
-
-const { data, pending, error, refresh } = await useFetch(URL+'/getData?collection=Character&name=MainCharacter', {
-    method: 'GET'
-})
-items = (data.value as any)[0].skins;
+items = data.skins;
 activeItems = ref(_.cloneDeep(items));
-const id : string = (data.value as any)[0]._id;
+const id : string = data._id;
 var itemToAdd = ref({
     name: '',
     price: '',
@@ -160,9 +162,7 @@ var window = false;
                 </v-col>
                 <v-col style="display: flex; justify-content: center; align-items: center;" cols="9" v-else>
                     <v-row v-if="window">
-
                         <v-col>
-
                             <v-text-field v-model="itemToAdd.name" label="Nom" type="text"></v-text-field>
                             <v-text-field v-model="itemToAdd.price" label="Preu" type="text"></v-text-field>
                             <v-file-input v-model="itemToAdd.image" accept="image/*" label="Skin" counter show-size></v-file-input>
