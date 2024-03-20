@@ -46,7 +46,7 @@ function handleConnection(ws, broadcastExceptSender) { // Adjusted to receive br
             ws.send(JSON.stringify({ event: 'spawn', data: players[id] }));
         }
     }
-    
+    ws.on ('updateAnimation',handleAnimation);
     ws.on('message', handleMessage);
 
     ws.on('close', () => {
@@ -64,8 +64,10 @@ function handleMessage(message) {
     
     try {
         const data = JSON.parse(message);
-        console.log(data);
         switch (data.event) {
+            case 'updateAnimation':
+                handleAnimation(data);
+                break;
             case 'updatePosition':
                 handlePosition(data)
                 break;
@@ -79,28 +81,62 @@ function handleMessage(message) {
                 break;
             // Add more cases for different message types
             default:
-                console.log('Unknown message type');
         }
     } catch (error) {
         console.error('Error parsing message:', error);
     }
 }
 function handlePosition(data) {
-    var playerId = data.id;
-    var position = data.position;
-    if (players[playerId]) {
-        players[playerId].position.x = position.x;
-        players[playerId].position.y = position.y;
-    }
-    const newPosiitionData = {
-        event: 'updatePosition',
-        data: {
-            id: playerId,
-            position: position
+    try {
+        const playerId = data.data.id;
+        const position = data.data.position;
+        
+        if (players[playerId]) {
+            // Update player position
+            players[playerId].position = position;
+            
+            // Prepare updated position data
+            const newPositionData = {
+                event: 'updatePosition',
+                data: {
+                    id: playerId,
+                    position: position
+                }
+            };
+            
+            // Broadcast the updated position to all clients except the sender
+            broadcastExceptSender(playerId, newPositionData);
+        } else {
+            console.log(`Player with ID ${playerId} not found.`);
         }
-    };
-    
-    broadcastExceptSender(data.id, newPosiitionData);
+    } catch (error) {
+        console.error('Error handling position:', error);
+    }
+}
+function handleAnimation(data) {
+    const playerId = data.data.id;
+    const animatorData = data.data.animator;
+    if (players[playerId]) {
+        // Update the player's animator parameters
+        players[playerId].animator.speed = animatorData.speed;
+        players[playerId].animator.vertical = animatorData.vertical;
+        players[playerId].animator.horizontal = animatorData.horizontal;
+        players[playerId].animator.lastVertical = animatorData.lastVertical;
+        players[playerId].animator.lastHorizontal = animatorData.lastHorizontal;
+
+        // Prepare and broadcast the updated animator data
+        const updatedAnimatorData = {
+            event: 'updateAnimation',
+            data: {
+                id: playerId,
+                animator: players[playerId].animator
+            }
+        };
+
+        broadcastExceptSender(playerId, updatedAnimatorData);
+    } else {
+        console.log(`Player with ID ${playerId} not found.`);
+    }
 }
 function handleMovement(data) {
     // Implement logic to handle player movement
