@@ -71,31 +71,33 @@ app.post('/updateskin', upload.single('file'), async (req, res) => {
         id: req.body.id,
         name: req.body.name,
         price: req.body.price,
-    }
-    if (skin.name) controladora.changeSkinParameters(skin.id, 'name', skin.name);
-    if (skin.price) controladora.changeSkinParameters(skin.id, 'price', skin.price);
-    if (req.file) {
-        console.log("hola")
-        const archivo = req.file;
-        const carpeta = req.body.folder;
-        controladora.getSkin(skin.id).then((response) => {
-            originalname = response[0].path.split('/')[1];
-            console.log(originalname);
-            archivo.originalname = originalname;
-            const subida = utils.uploadFile(archivo, carpeta);
-            if (subida.hasOwnProperty("name")) {
+    };
 
-                controladora.addSkin(subida.name, skin, idPersonaje).then((response) => {
-                    res.status(200).json(utils.respuesta(subida));
-                }).catch((err) => {
-                    res.status(400).json(utils.respuesta(err));
-                });
-            } else {
-                res.status(400).json(utils.respuesta(subida));
+    try {
+        if (skin.name) {
+            await controladora.changeSkinParameters(skin.id, 'name', skin.name);
+            if (skin.price) {
+                await controladora.changeSkinParameters(skin.id, 'price', skin.price);
             }
-        });
+            if (req.file) {
+                const archivo = req.file;
+                const carpeta = req.body.folder;
+                const response = await controladora.getSkin(skin.id);
+                const originalname = response[0].path.split('/')[1];
+                archivo.originalname = originalname;
+                const subida = await utils.uploadFile(archivo, carpeta);
+                if (subida.hasOwnProperty("name")) {
+                    res.status(200).json(utils.respuesta(subida));
+                } else {
+                    res.status(400).json(utils.respuesta(subida));
+                }
+            } else {
+                res.status(200).json({ message: 'Skin actualizada correctamente.' });
+            }
+        }
+    } catch (err) {
+        res.status(400).json(utils.respuesta(err));
     }
-    res.status(200).json({ message: 'Skin actualizada correctamente.' });
 });
 /*--Gestion de imagenes--*/
 

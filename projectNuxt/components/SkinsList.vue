@@ -53,13 +53,13 @@ var items: any = [/*
     }*/
 ]
 var activeItems: any = [];
-
-const { data, pending, error, refresh } = await useFetch(URL+'/getData?collection=Character&name=MainCharacter', {
+let key = ref(0);
+const { data, pending, error, refresh } = await useFetch(URL + '/getData?collection=Character&name=MainCharacter', {
     method: 'GET'
 })
 items = (data.value as any)[0].skins;
 activeItems = ref(_.cloneDeep(items));
-const id : string = (data.value as any)[0]._id;
+const id: string = (data.value as any)[0]._id;
 var itemToAdd = ref({
     name: '',
     price: '',
@@ -83,6 +83,7 @@ function checkChanges() {
     }
 }
 function saveChanges() {
+    console.log(items, activeItems.value);
     const isEqual = _.isEqual(items, activeItems.value);
     if (!isEqual) {
         updateSkin();
@@ -104,8 +105,8 @@ async function addSkin() {
     formData.append('folder', 'mainCharacter');
     formData.append('id', id);
     //formData.append('price', itemToAdd.value.price);
-    for(var pair of formData.entries()) {
-        console.log(pair[0]+ ', '+ pair[1]);
+    for (var pair of formData.entries()) {
+        console.log(pair[0] + ', ' + pair[1]);
     }
     await $fetch(URL + '/addskin', {
         method: 'POST',
@@ -119,23 +120,22 @@ async function addSkin() {
 }
 async function updateSkin() {
     const formData = new FormData();
-    console.log(selectedItem.value[0]);
-    if(selectedItem.value[0].image)formData.append('file', selectedItem.value[0].image[0]);
+    if (selectedItem.value[0].image) formData.append('file', selectedItem.value[0].image[0]);
     formData.append('name', selectedItem.value[0].name);
     formData.append('price', selectedItem.value[0].price);
     formData.append('folder', 'mainCharacter');
     formData.append('id', selectedItem.value[0]._id);
     //formData.append('price', itemToAdd.value.price);
-    for(var pair of formData.entries()) {
-        console.log(pair[0]+ ', '+ pair[1]);
+    for (var pair of formData.entries()) {
+        console.log(pair[0] + ', ' + pair[1]);
     }
     await $fetch(URL + '/updateskin', {
         method: 'POST',
         body: formData
     }).catch((error) => {
         console.log(error);
-    }).then((result) => {
-        console.log(result);
+    }).then(async (result) => {
+        reloadNuxtApp();
     });
 
 }
@@ -144,7 +144,9 @@ var window = false;
 <template>
     <v-card>
         <v-card-title>
-            <h1>Skins</h1>
+            <h1>Skins</h1><a
+                href="https://sanderfrenken.github.io/Universal-LPC-Spritesheet-Character-Generator">Creador de
+                sprites</a>
         </v-card-title>
         <v-card-text>
             <v-row>
@@ -172,10 +174,11 @@ var window = false;
                     </v-row>
                     <v-row>
                         <v-col cols="6">
-                            <img :src="`${URL}/imagen/${selectedItem[0]?.path}`" alt="skin" height="600">
+                            <img :src="`${URL}/imagen/${selectedItem[0]?.path}?key=${key}`" alt="skin" height="600">
                         </v-col>
                         <v-col cols="6">
-                            <v-file-input v-model="selectedItem[0].image" accept="image/*" label="Skin" counter show-size></v-file-input>
+                            <v-file-input v-model="selectedItem[0].image" accept="image/*" label="Skin" counter
+                                show-size></v-file-input>
                             <v-text-field label="Preu" v-model="selectedItem[0].price" type="text"></v-text-field>
                             <v-btn color="primary" @click="saveChanges">Save</v-btn>
                         </v-col>
@@ -189,9 +192,9 @@ var window = false;
 
                             <v-text-field v-model="itemToAdd.name" label="Nom" type="text"></v-text-field>
                             <v-text-field v-model="itemToAdd.price" label="Preu" type="text"></v-text-field>
-                            <v-file-input v-model="itemToAdd.image" accept="image/*" label="Skin" counter show-size></v-file-input>
-                            <v-btn @click="addSkin" :disabled="checkFields()"
-                                color="primary">Save</v-btn>
+                            <v-file-input v-model="itemToAdd.image" accept="image/*" label="Skin" counter
+                                show-size></v-file-input>
+                            <v-btn @click="addSkin" :disabled="checkFields()" color="primary">Save</v-btn>
                         </v-col>
                     </v-row>
                     <h1 v-else><v-icon icon="mdi-information"></v-icon>Selecciona una skin</h1>
