@@ -5,18 +5,23 @@ const URL = 'http://localhost:3450';
 const { data, pending, error, refresh } = await useFetch(URL+'/getData', {
     method: 'GET'
 })
-console.log(data.value);
 
-var datos = (data.value as any)[0];
+let datos = ref({})
+datos.value = data.value[0]
+
+let llave = 0;
+watch(datos, () => {
+    llave++
+});
 const changeSelection = () => {
   if(selected.value === 'MainCharacter') {
-    datos = (data.value as any)[0]
+    datos.value = data.value[0]
     console.log('Player')
   } else if(selected.value === 'Enemy') {
-    datos = (data.value as any)[1]
+    datos.value = data.value[1]
     console.log('Monsters')
   } else if(selected.value === 'Weapons') {
-    datos = (data.value as any)[2]
+    datos.value = data.value[2]
     console.log('Weapons')
   }
 }
@@ -33,9 +38,9 @@ const selected = ref(people[0])
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="12">
-        <SkinsList :data="datos"/>
-        <UpdateParams :data="datos"></UpdateParams>
+      <v-col cols="12" >
+        <SkinsList :data="datos" :key="llave"/>
+        <UpdateParams :data="datos" :key="llave"></UpdateParams>
       </v-col>
     </v-row>
 

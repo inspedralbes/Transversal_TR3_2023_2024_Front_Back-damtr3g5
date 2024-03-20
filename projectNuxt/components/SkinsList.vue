@@ -59,7 +59,8 @@ var items: any = [/*
     }*/
 ]
 var activeItems: any = [];
-items = data.skins;
+items = [...data.skins];
+
 activeItems = ref(_.cloneDeep(items));
 const id : string = data._id;
 var itemToAdd = ref({
