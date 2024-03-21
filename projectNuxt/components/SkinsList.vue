@@ -197,7 +197,7 @@ var window = false;
                                     <v-btn color="primary" @click="saveChanges">Guardar</v-btn>
                                 </v-col>
                                 <v-col style="display: flex; justify-content: end;">
-                                    <v-btn color="red-accent-4" @click="deleteSkin">Borrar</v-btn>
+                                    <v-btn color="red-accent-4" prepend-icon="mdi-trash-can-outline" text="Eliminar" @click="deleteSkin"></v-btn>
                                 </v-col>
 
 
