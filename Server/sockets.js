@@ -7,6 +7,9 @@ var Player = require('./Classes/Player.js');
 var players = [];
 var sockets = [];
 
+const messageRateLimit = 5;
+const lastMessageTimestamps = {};
+
 //=====WEBSOCKET FUNCTIONS======
 function broadcastExceptSender(senderId, data) {
     for (let id in sockets) {
@@ -47,7 +50,9 @@ function handleConnection(ws, broadcastExceptSender) { // Adjusted to receive br
         }
     }
     ws.on ('updateAnimation',handleAnimation);
-    ws.on('message', handleMessage);
+    ws.on('message', (message) => {
+        handleMessage(ws, message);
+    });
 
     ws.on('close', () => {
         console.log('Client disconnected');
@@ -60,20 +65,28 @@ function handleConnection(ws, broadcastExceptSender) { // Adjusted to receive br
 //Positional data from client
 
 
-function handleMessage(message) {
-    
+function handleMessage(ws,message) {
+    const now = Date.now();
+    const lastTimestamp = lastMessageTimestamps[ws.id] || 0;
+    if (now - lastTimestamp <1000/messageRateLimit) {
+        return;
+    }
+    lastMessageTimestamps[ws.id] = now;
     try {
+        
         const data = JSON.parse(message);
         switch (data.event) {
             case 'updateAnimation':
                 handleAnimation(data);
                 break;
             case 'updatePosition':
+                
                 handlePosition(data)
                 break;
             case 'join':
                 break;
             case 'movement':
+                
                 handleMovement(data);
                 break;
             case 'action':
@@ -92,7 +105,7 @@ function handlePosition(data) {
         const position = data.data.position;
         
         if (players[playerId]) {
-            // Update player position
+            // Directly update player position without validation
             players[playerId].position = position;
             
             // Prepare updated position data
@@ -145,5 +158,8 @@ function handleMovement(data) {
 function handleAction(data) {
     // Implement logic to handle player actions
 }
+//=====UTILITY FUNCTIONS======
+
+
 
 module.exports = { initializeSocket };
