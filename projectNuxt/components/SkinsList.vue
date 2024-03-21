@@ -115,7 +115,7 @@ async function addSkin() {
         console.log(error);
     }).then((result) => {
         console.log(result);
-        reloadNuxtApp();
+        reloadNuxtApp({force: true});
     });
 }
 async function updateSkin() {
@@ -135,7 +135,7 @@ async function updateSkin() {
     }).catch((error) => {
         console.log(error);
     }).then(async (result) => {
-        reloadNuxtApp();
+        reloadNuxtApp({force: true});
     });
 
 }
@@ -146,7 +146,7 @@ async function deleteSkin() {
     }).catch((error) => {
         console.log(error);
     }).then(async (result) => {
-        reloadNuxtApp();
+        reloadNuxtApp({force: true});
     });
 }
 var window = false;

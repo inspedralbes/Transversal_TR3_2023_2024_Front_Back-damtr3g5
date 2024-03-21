@@ -1,8 +1,8 @@
 const mongo = require('./mongo.js');
 const ObjectId = require("mongodb").ObjectId;
 module.exports = {
-    getCharacter, updateCharacter, deleteCharacter, insertCharacter, getWeapon, updateWeapon, deleteWeapon, insertWeapon, getUser, updateUser, getSkin, deleteSkin, 
-    deleteUser, insertUser, updateCharacterParameters, addSkin, changeSkinParameters, changeCharacterParameters, changeValueGeneric, changeWeaponParameters,objectData
+    getCharacter, updateCharacter, deleteCharacter, insertCharacter, getWeapon, updateWeapon, deleteWeapon, insertWeapon, getUser, updateUser, getSkin, deleteSkin,
+    deleteUser, insertUser, updateCharacterParameters, addSkin, changeSkinParameters, changeCharacterParameters, changeValueGeneric, changeWeaponParameters, objectData
 };
 
 async function getCharacter(id) {
@@ -100,14 +100,17 @@ async function getSkin(id) {
 
 async function deleteSkin(id) {
     try {
-        const document = mongo.deleteElement("Skin", "_id", new ObjectId(id));
+        const document = await mongo.deleteElement("Skin", "_id", new ObjectId(id));
         //search and delete the skin from the character
         const personajes = await mongo.getCollection("Character");
         for (let personaje of personajes) {
-            if (personaje.skins.includes(new ObjectId(id))) {
-                personaje.skins = personaje.skins.filter((e) => e != new ObjectId(id));
-                mongo.updateElement("Character", "_id", personaje._id, personaje);
+            for(let i = 0; i < personaje.skins.length; i++){
+                if(personaje.skins[i].toString() == id){
+                    personaje.skins.splice(i, 1);
+                    break;
+                }
             }
+            await mongo.updateElement("Character", "_id", personaje._id, personaje);
         }
         return document;
     }

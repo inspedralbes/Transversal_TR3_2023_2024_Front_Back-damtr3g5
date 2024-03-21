@@ -102,8 +102,7 @@ app.post('/updateskin', upload.single('file'), async (req, res) => {
 app.post('/deleteskin', async (req, res) => {
     const id = req.body.id;
     const folder = req.body.folder;
-    const response = await controladora.deleteSkin(id);
-    console.log(response);
+    const response = await controladora.getSkin(id);
     const fileName = response[0].path.split('/')[1];
     const filePath = path.join(__dirname, 'skins', folder, fileName);
     fs.unlink(filePath, async (err) => {
