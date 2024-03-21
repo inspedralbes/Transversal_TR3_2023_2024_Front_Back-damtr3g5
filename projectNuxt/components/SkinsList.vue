@@ -99,9 +99,9 @@ function checkFields() {
 async function addSkin() {
     console.log(itemToAdd.value.image[0]);
     const formData = new FormData();
-    formData.append('file', activeItems.value.image[0]);
-    formData.append('name', activeItems.value.name);
-    formData.append('price', activeItems.value.price);
+    formData.append('file', itemToAdd.value.image[0]);
+    formData.append('name', itemToAdd.value.name);
+    formData.append('price', itemToAdd.value.price);
     formData.append('folder', 'mainCharacter');
     formData.append('id', id);
     //formData.append('price', itemToAdd.value.price);
@@ -138,6 +138,16 @@ async function updateSkin() {
         reloadNuxtApp();
     });
 
+}
+async function deleteSkin() {
+    await $fetch(URL + '/deleteskin', {
+        method: 'POST',
+        body: JSON.stringify({ id: selectedItem.value[0]._id, folder: 'mainCharacter' })
+    }).catch((error) => {
+        console.log(error);
+    }).then(async (result) => {
+        reloadNuxtApp();
+    });
 }
 var window = false;
 </script>
@@ -180,7 +190,16 @@ var window = false;
                             <v-file-input v-model="selectedItem[0].image" accept="image/*" label="Skin" counter
                                 show-size></v-file-input>
                             <v-text-field label="Preu" v-model="selectedItem[0].price" type="text"></v-text-field>
-                            <v-btn color="primary" @click="saveChanges">Save</v-btn>
+                            <v-row>
+                                <v-col align-self="start">
+                                    <v-btn color="primary" @click="saveChanges">Guardar</v-btn>
+                                </v-col>
+                                <v-col style="display: flex; justify-content: end;">
+                                    <v-btn color="red-accent-4" @click="deleteSkin" >Borrar</v-btn>
+                                </v-col>
+
+                                
+                            </v-row>
                         </v-col>
                     </v-row>
 

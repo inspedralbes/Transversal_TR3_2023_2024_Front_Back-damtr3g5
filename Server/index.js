@@ -99,6 +99,22 @@ app.post('/updateskin', upload.single('file'), async (req, res) => {
         res.status(400).json(utils.respuesta(err));
     }
 });
+app.post('/deleteskin', async (req, res) => {
+    const id = req.body.id;
+    const folder = req.body.folder;
+    const response = await controladora.deleteSkin(id);
+    console.log(response);
+    const fileName = response[0].path.split('/')[1];
+    const filePath = path.join(__dirname, 'skins', folder, fileName);
+    fs.unlink(filePath, async (err) => {
+        if (err) {
+            res.status(400).json(utils.respuesta(err));
+        } else {
+            await controladora.deleteSkin(id);
+            res.status(200).json({ message: 'Skin eliminada correctamente.' });
+        }
+    });
+});
 /*--Gestion de imagenes--*/
 
 app.get("/getData", async (req, res) => {

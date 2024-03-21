@@ -1,8 +1,8 @@
 const mongo = require('./mongo.js');
 const ObjectId = require("mongodb").ObjectId;
 module.exports = {
-    getCharacter, updateCharacter, deleteCharacter, insertCharacter, getWeapon, updateWeapon, deleteWeapon, insertWeapon, getUser, updateUser, getSkin, deleteUser, insertUser
-    , updateCharacterParameters, addSkin, changeSkinParameters, changeCharacterParameters, changeValueGeneric, changeWeaponParameters,objectData
+    getCharacter, updateCharacter, deleteCharacter, insertCharacter, getWeapon, updateWeapon, deleteWeapon, insertWeapon, getUser, updateUser, getSkin, deleteSkin, 
+    deleteUser, insertUser, updateCharacterParameters, addSkin, changeSkinParameters, changeCharacterParameters, changeValueGeneric, changeWeaponParameters,objectData
 };
 
 async function getCharacter(id) {
@@ -94,6 +94,24 @@ async function getSkin(id) {
         const document = mongo.getCollection("Skin", { "_id": new ObjectId(id) });
         return document;
     } catch (err) {
+        console.log(err.stack);
+    }
+}
+
+async function deleteSkin(id) {
+    try {
+        const document = mongo.deleteElement("Skin", "_id", new ObjectId(id));
+        //search and delete the skin from the character
+        const personajes = await mongo.getCollection("Character");
+        for (let personaje of personajes) {
+            if (personaje.skins.includes(new ObjectId(id))) {
+                personaje.skins = personaje.skins.filter((e) => e != new ObjectId(id));
+                mongo.updateElement("Character", "_id", personaje._id, personaje);
+            }
+        }
+        return document;
+    }
+    catch (err) {
         console.log(err.stack);
     }
 }
