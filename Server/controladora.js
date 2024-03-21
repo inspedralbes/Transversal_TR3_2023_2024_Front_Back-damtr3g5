@@ -112,6 +112,16 @@ async function deleteSkin(id) {
             }
             await mongo.updateElement("Character", "_id", personaje._id, personaje);
         }
+        const weapons = await mongo.getCollection("Weapon");
+        for (let weapon of weapons) {
+            for(let i = 0; i < weapon.skins.length; i++){
+                if(weapon.skins[i].toString() == id){
+                    weapon.skins.splice(i, 1);
+                    break;
+                }
+            }
+            await mongo.updateElement("Weapon", "_id", weapon._id, weapon);
+        }
         return document;
     }
     catch (err) {
@@ -148,8 +158,15 @@ async function addSkin(path, skin, idCharacter) {
         const res = await mongo.getCollection("Skin", { "name": skin.name });
         const skinInsertadaId = res[0]._id;
         let personaje = await mongo.getElement("Character", "_id", new ObjectId(idCharacter));
-        personaje.skins.push(skinInsertadaId);
-        await mongo.updateElement("Character", "_id", new ObjectId(idCharacter), personaje);
+        if(!personaje){
+            personaje = await mongo.getElement("Weapon", "_id", new ObjectId(idCharacter));
+            personaje.skins.push(skinInsertadaId);
+            await mongo.updateElement("Weapon", "_id", new ObjectId(idCharacter), personaje);
+
+        }else{
+            personaje.skins.push(skinInsertadaId);
+            await mongo.updateElement("Character", "_id", new ObjectId(idCharacter), personaje);
+        }
         //return document;
     } catch (err) {
         console.log(err.stack);

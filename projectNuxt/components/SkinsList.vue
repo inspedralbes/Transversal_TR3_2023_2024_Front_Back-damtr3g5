@@ -4,9 +4,12 @@ const URL = 'http://localhost:3450';
 const props = defineProps({
     data: {
     required: true,
+  },folder:{
+    required: true,
+    type: String
   }
 });
-const { data } = props;
+const { data,folder } = props;
 var items: any = [/*
     {
         id: 1,
@@ -58,6 +61,8 @@ var items: any = [/*
         image: 'character-sheet.png'
     }*/
 ]
+console.log(folder);
+
 var activeItems: any = [];
 items = [...data.skins];
 
@@ -106,7 +111,7 @@ async function addSkin() {
     formData.append('file', itemToAdd.value.image[0]);
     formData.append('name', itemToAdd.value.name);
     formData.append('price', itemToAdd.value.price);
-    formData.append('folder', 'mainCharacter');
+    formData.append('folder', folder.toLocaleLowerCase());
     formData.append('id', id);
     //formData.append('price', itemToAdd.value.price);
     for (var pair of formData.entries()) {
@@ -127,7 +132,7 @@ async function updateSkin() {
     if (selectedItem.value[0].image) formData.append('file', selectedItem.value[0].image[0]);
     formData.append('name', selectedItem.value[0].name);
     formData.append('price', selectedItem.value[0].price);
-    formData.append('folder', 'mainCharacter');
+    formData.append('folder', folder.toLocaleLowerCase());
     formData.append('id', selectedItem.value[0]._id);
     //formData.append('price', itemToAdd.value.price);
     for (var pair of formData.entries()) {
@@ -147,7 +152,7 @@ async function deleteSkin() {
     if (confirm("Segur que vols ho eliminar? Aquesta acció serà irreversible") == true) {
         await $fetch(URL + '/deleteskin', {
             method: 'POST',
-            body: JSON.stringify({ id: selectedItem.value[0]._id, folder: 'mainCharacter' })
+            body: JSON.stringify({ id: selectedItem.value[0]._id, folder: folder.toLocaleLowerCase() })
         }).catch((error) => {
             console.log(error);
         }).then(async (result) => {

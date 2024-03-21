@@ -39,7 +39,7 @@ const selected = ref(people[0])
     </v-row>
     <v-row>
       <v-col cols="12" >
-        <SkinsList :data="datos" :key="llave"/>
+        <SkinsList :data="datos" :folder="selected" :key="llave"/>
         <UpdateParams :data="datos" :key="llave"></UpdateParams>
       </v-col>
     </v-row>
