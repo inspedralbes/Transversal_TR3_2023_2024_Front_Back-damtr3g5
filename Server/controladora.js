@@ -2,7 +2,8 @@ const mongo = require('./mongo.js');
 const ObjectId = require("mongodb").ObjectId;
 module.exports = {
     getCharacter, updateCharacter, deleteCharacter, insertCharacter, getWeapon, updateWeapon, deleteWeapon, insertWeapon, getUser, updateUser, getSkin, deleteSkin,
-    deleteUser, insertUser, updateCharacterParameters, addSkin, changeSkinParameters, changeCharacterParameters, changeValueGeneric, changeWeaponParameters, objectData
+    deleteUser, insertUser, updateCharacterParameters, addSkin, changeSkinParameters, changeCharacterParameters, changeValueGeneric, changeWeaponParameters, objectData,
+    getGameParams, updateGameParams
 };
 
 async function getCharacter(id) {
@@ -104,8 +105,8 @@ async function deleteSkin(id) {
         //search and delete the skin from the character
         const personajes = await mongo.getCollection("Character");
         for (let personaje of personajes) {
-            for(let i = 0; i < personaje.skins.length; i++){
-                if(personaje.skins[i].toString() == id){
+            for (let i = 0; i < personaje.skins.length; i++) {
+                if (personaje.skins[i].toString() == id) {
                     personaje.skins.splice(i, 1);
                     break;
                 }
@@ -114,8 +115,8 @@ async function deleteSkin(id) {
         }
         const weapons = await mongo.getCollection("Weapon");
         for (let weapon of weapons) {
-            for(let i = 0; i < weapon.skins.length; i++){
-                if(weapon.skins[i].toString() == id){
+            for (let i = 0; i < weapon.skins.length; i++) {
+                if (weapon.skins[i].toString() == id) {
                     weapon.skins.splice(i, 1);
                     break;
                 }
@@ -158,12 +159,12 @@ async function addSkin(path, skin, idCharacter) {
         const res = await mongo.getCollection("Skin", { "name": skin.name });
         const skinInsertadaId = res[0]._id;
         let personaje = await mongo.getElement("Character", "_id", new ObjectId(idCharacter));
-        if(!personaje){
+        if (!personaje) {
             personaje = await mongo.getElement("Weapon", "_id", new ObjectId(idCharacter));
             personaje.skins.push(skinInsertadaId);
             await mongo.updateElement("Weapon", "_id", new ObjectId(idCharacter), personaje);
 
-        }else{
+        } else {
             personaje.skins.push(skinInsertadaId);
             await mongo.updateElement("Character", "_id", new ObjectId(idCharacter), personaje);
         }
@@ -243,6 +244,29 @@ async function objectData(collection, char) {
         data = personaje.concat(armas);
     }
     return data;
+}
+
+async function getGameParams() {
+    try {
+        const document = await mongo.getCollection("Game");
+        return document[0];
+    } catch (err) {
+        console.log(err.stack);
+    }
+}
+async function updateGameParams(newValues) {
+    try {
+        const personaje = await mongo.getCollection("Game")[0];
+
+        for (let key in newValues) {
+            if (newValues.hasOwnProperty(key) && personaje.hasOwnProperty(key)) {
+                personaje[key] = newValues[key];
+            }
+        }
+        const document = mongo.updateElement("Game", "_id", new ObjectId(personaje._id), data);
+    } catch (err) {
+        console.log(err.stack);
+    }
 }
 /*{
   "_id": {

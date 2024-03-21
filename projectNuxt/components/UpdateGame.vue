@@ -1,49 +1,37 @@
 <script setup lang="ts">
 import _ from 'lodash';
 const URL = 'http://localhost:3450';
-const props = defineProps({
-    data: {
-        required: true,
-        type: Object
-    }
-});
-const { data } = props;
-console.log(data);
+
+const { data, pending, error, refresh } = await useFetch(URL + '/gameparams', {
+    method: 'GET'
+})
 
 let char = ref({})
-char.value = { ...data }
+
+char.value = { ...data.value }
 
 const id: string = char.value._id;
-delete char.value.skins;
 delete char.value._id;
-delete char.value.name;
-console.log(id);
 
 const llaves = Object.keys(char.value);
 const valores = Object.values(char.value);
 const items = {};
 for (let i = 0; i < llaves.length; i++) {
-    items[llaves[i].toUpperCase()] = valores[i].toString();
+    items[llaves[i]] = valores[i];
 }
 const newItem = ref({})
 newItem.value = { ...items }
-const itemToAdd = ref(items);
+const itemToAdd = ref({...items});
 function checkChanges(object1: Object, object2: Object) {
-    const keys1 = Object.keys(object1);
-    const keys2 = Object.keys(object2);
-
-    if (keys1.length !== keys2.length) {
-        return false;
-    }
-
-    for (let key of keys1) {
-        if (object1[key] !== object2[key]) {
-            return false;
+      for (let key in object1) {
+        for (let paramKey in object1[key]) {
+          if (object1[key][paramKey] !== object2[key][paramKey]) {
+            return false; // Si hay un cambio, devolver true
+          }
         }
+      }
+      return true; // Si no hay cambios, devolver false
     }
-
-    return true;
-}
 function bodyCreate() {
     const body = {
         id: id,
@@ -58,18 +46,9 @@ function bodyCreate() {
     return lowercaseBody;
 }
 
-function collection(object1: Object) {
-    const keys1 = Object.keys(object1);
-    let char = keys1.some((key) => key === 'hp');
-    if (char) {
-        return 'Character';
-    } else {
-        return 'Weapons';
-    }
-}
 async function addSkin() {
     const body = bodyCreate()
-    await $fetch(URL + `/changeParam?collection=${collection(itemToAdd.value)}`, {
+    await $fetch(URL + `/updategameparams`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -85,8 +64,9 @@ async function addSkin() {
 </script>
 <template>
     <v-card>
+        {{ newItem }}{{ itemToAdd }}
         <v-card-title>
-            <h1>Parameters</h1>
+            <h1>Game Parameters</h1>
         </v-card-title>
         <v-card-text>
             <v-row>
@@ -94,10 +74,15 @@ async function addSkin() {
                 <v-col style="display: flex; justify-content: center; align-items: center;" cols="9">
                     <v-row>
                         <v-col>
-                            <v-text-field v-for="(value, key) in itemToAdd" :key="key" v-model="itemToAdd[key]"
-                                :label="key" type="text"></v-text-field>
+                            <div v-for="(value, key) in newItem" :key="key">
+                                <h2 style="margin-bottom: 10px;">{{ key.toUpperCase() }}</h2>
+                                <div v-for="(paramValue, paramKey) in newItem[key]" :key="paramKey">
+                                    <span>{{ paramKey.replace('_',' ').toUpperCase() }}</span><v-text-field v-model="newItem[key][paramKey]" :label="paramKey.replace('_',' ').toUpperCase()" type="text"></v-text-field>
+                                </div>
+                                
+                            </div>                            
                             <v-btn @click="addSkin" color="primary"
-                                :disabled="checkChanges(itemToAdd, newItem)">Update</v-btn>
+                                :disabled="checkChanges(newItem, itemToAdd)">Update</v-btn>
                         </v-col>
                     </v-row>
                 </v-col>

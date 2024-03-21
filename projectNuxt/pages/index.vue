@@ -33,6 +33,9 @@ const selected = ref(people[0])
 <template>
   <v-container>
     <v-row>
+      <v-col cols="12">
+        <UpdateGame :key="llave" style="margin-bottom: 100px;"/>
+      </v-col>
       <v-col cols="3">
         <v-select label="Selecciona" :items="people" variant="solo-inverted" v-model="selected" v-on:update:model-value="changeSelection()"></v-select>
       </v-col>

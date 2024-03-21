@@ -139,3 +139,14 @@ app.post("/changeParam",(req,res)=>{
     }
     res.json({'collection':collection,'nuevo':newValue});
 })
+app.get("/gameparams", async (req, res) => {
+    const data = await controladora.getGameParams();
+    console.log(data);
+    res.json(data);
+})
+
+app.get("/updategameparams", async (req, res) => {
+    const paramas = req.body;
+    const data = await controladora.updateGameParams(paramas);
+    res.json(data);
+})
