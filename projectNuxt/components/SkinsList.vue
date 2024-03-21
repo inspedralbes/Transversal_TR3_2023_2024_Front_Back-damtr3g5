@@ -115,7 +115,7 @@ async function addSkin() {
         console.log(error);
     }).then((result) => {
         console.log(result);
-        reloadNuxtApp({force: true});
+        reloadNuxtApp({ force: true });
     });
 }
 async function updateSkin() {
@@ -135,19 +135,21 @@ async function updateSkin() {
     }).catch((error) => {
         console.log(error);
     }).then(async (result) => {
-        reloadNuxtApp({force: true});
+        reloadNuxtApp({ force: true });
     });
 
 }
 async function deleteSkin() {
-    await $fetch(URL + '/deleteskin', {
-        method: 'POST',
-        body: JSON.stringify({ id: selectedItem.value[0]._id, folder: 'mainCharacter' })
-    }).catch((error) => {
-        console.log(error);
-    }).then(async (result) => {
-        reloadNuxtApp({force: true});
-    });
+    if (confirm("Segur que vols ho eliminar? Aquesta acció serà irreversible") == true) {
+        await $fetch(URL + '/deleteskin', {
+            method: 'POST',
+            body: JSON.stringify({ id: selectedItem.value[0]._id, folder: 'mainCharacter' })
+        }).catch((error) => {
+            console.log(error);
+        }).then(async (result) => {
+            reloadNuxtApp({ force: true });
+        });
+    }
 }
 var window = false;
 </script>
@@ -195,10 +197,10 @@ var window = false;
                                     <v-btn color="primary" @click="saveChanges">Guardar</v-btn>
                                 </v-col>
                                 <v-col style="display: flex; justify-content: end;">
-                                    <v-btn color="red-accent-4" @click="deleteSkin" >Borrar</v-btn>
+                                    <v-btn color="red-accent-4" @click="deleteSkin">Borrar</v-btn>
                                 </v-col>
 
-                                
+
                             </v-row>
                         </v-col>
                     </v-row>
