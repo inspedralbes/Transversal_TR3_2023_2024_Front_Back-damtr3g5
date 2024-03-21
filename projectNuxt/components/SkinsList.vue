@@ -61,6 +61,7 @@ var items: any = [/*
 var activeItems: any = [];
 items = [...data.skins];
 
+let key = ref(0);
 activeItems = ref(_.cloneDeep(items));
 const id : string = data._id;
 var itemToAdd = ref({
@@ -78,6 +79,7 @@ function checkChanges() {
     const isEqual = _.isEqual(items, activeItems.value);
     if (!isEqual) {
         if (confirm("No has desat els canvis, els vols guardar?") == true) {
+            updateSkin();
             items = _.cloneDeep(activeItems.value);
         } else {
             activeItems = ref(_.cloneDeep(items));
@@ -85,8 +87,10 @@ function checkChanges() {
     }
 }
 function saveChanges() {
+    console.log(items, activeItems.value);
     const isEqual = _.isEqual(items, activeItems.value);
     if (!isEqual) {
+        updateSkin();
         items = _.cloneDeep(activeItems.value);
     }
 }
@@ -105,8 +109,8 @@ async function addSkin() {
     formData.append('folder', 'mainCharacter');
     formData.append('id', id);
     //formData.append('price', itemToAdd.value.price);
-    for(var pair of formData.entries()) {
-        console.log(pair[0]+ ', '+ pair[1]);
+    for (var pair of formData.entries()) {
+        console.log(pair[0] + ', ' + pair[1]);
     }
     await $fetch(URL + '/addskin', {
         method: 'POST',
@@ -115,15 +119,50 @@ async function addSkin() {
         console.log(error);
     }).then((result) => {
         console.log(result);
-        reloadNuxtApp();
+        reloadNuxtApp({ force: true });
     });
+}
+async function updateSkin() {
+    const formData = new FormData();
+    if (selectedItem.value[0].image) formData.append('file', selectedItem.value[0].image[0]);
+    formData.append('name', selectedItem.value[0].name);
+    formData.append('price', selectedItem.value[0].price);
+    formData.append('folder', 'mainCharacter');
+    formData.append('id', selectedItem.value[0]._id);
+    //formData.append('price', itemToAdd.value.price);
+    for (var pair of formData.entries()) {
+        console.log(pair[0] + ', ' + pair[1]);
+    }
+    await $fetch(URL + '/updateskin', {
+        method: 'POST',
+        body: formData
+    }).catch((error) => {
+        console.log(error);
+    }).then(async (result) => {
+        reloadNuxtApp({ force: true });
+    });
+
+}
+async function deleteSkin() {
+    if (confirm("Segur que vols ho eliminar? Aquesta acció serà irreversible") == true) {
+        await $fetch(URL + '/deleteskin', {
+            method: 'POST',
+            body: JSON.stringify({ id: selectedItem.value[0]._id, folder: 'mainCharacter' })
+        }).catch((error) => {
+            console.log(error);
+        }).then(async (result) => {
+            reloadNuxtApp({ force: true });
+        });
+    }
 }
 var window = false;
 </script>
 <template>
     <v-card>
         <v-card-title>
-            <h1>Skins</h1>
+            <h1>Skins</h1><a
+                href="https://sanderfrenken.github.io/Universal-LPC-Spritesheet-Character-Generator">Creador de
+                sprites</a>
         </v-card-title>
         <v-card-text>
             <v-row>
@@ -151,12 +190,22 @@ var window = false;
                     </v-row>
                     <v-row>
                         <v-col cols="6">
-                            <img :src="`${URL}/imagen/${selectedItem[0]?.path}`" alt="skin" height="600">
+                            <img :src="`${URL}/imagen/${selectedItem[0]?.path}?key=${key}`" alt="skin" height="600">
                         </v-col>
                         <v-col cols="6">
-                            <input type="file">
+                            <v-file-input v-model="selectedItem[0].image" accept="image/*" label="Skin" counter
+                                show-size></v-file-input>
                             <v-text-field label="Preu" v-model="selectedItem[0].price" type="text"></v-text-field>
-                            <v-btn color="primary" @click="saveChanges">Save</v-btn>
+                            <v-row>
+                                <v-col align-self="start">
+                                    <v-btn color="primary" @click="saveChanges">Guardar</v-btn>
+                                </v-col>
+                                <v-col style="display: flex; justify-content: end;">
+                                    <v-btn color="red-accent-4" prepend-icon="mdi-trash-can-outline" text="Eliminar" @click="deleteSkin"></v-btn>
+                                </v-col>
+
+
+                            </v-row>
                         </v-col>
                     </v-row>
 
@@ -166,9 +215,9 @@ var window = false;
                         <v-col>
                             <v-text-field v-model="itemToAdd.name" label="Nom" type="text"></v-text-field>
                             <v-text-field v-model="itemToAdd.price" label="Preu" type="text"></v-text-field>
-                            <v-file-input v-model="itemToAdd.image" accept="image/*" label="Skin" counter show-size></v-file-input>
-                            <v-btn @click="addSkin" :disabled="checkFields()"
-                                color="primary">Save</v-btn>
+                            <v-file-input v-model="itemToAdd.image" accept="image/*" label="Skin" counter
+                                show-size></v-file-input>
+                            <v-btn @click="addSkin" :disabled="checkFields()" color="primary">Save</v-btn>
                         </v-col>
                     </v-row>
                     <h1 v-else><v-icon icon="mdi-information"></v-icon>Selecciona una skin</h1>
