@@ -3,9 +3,52 @@ var uuid = require('uuid-random');
 
 //Custom - Classes
 var Player = require('./Classes/Player.js');
+var Bullet = require('./Classes/Bullet.js');
 
 var players = [];
 var sockets = [];
+var bullets = [];
+
+//Updates
+setInterval (() => {
+    bullets.forEach(bullet => {
+        var isDestroyed = bullet.onUpdate();
+
+        //Remove
+        if (isDestroyed) {
+            var index = bullets.indexOf(bullet);
+            if (index > -1) {
+                bullets.splice(index, 1);
+
+                var returnData = {
+                    id: bullet.id
+                }
+                for (var id in players) {
+                    sockets[id].send(JSON.stringify({ event: 'serverUnSpawn', data: returnData }));
+                }
+            }
+
+        }
+        else {
+            var returnData = {
+                id: bullet.id,
+                position: {
+                    x: bullet.position.x,
+                    y: bullet.position.y
+                
+                }
+            }
+            Object.keys(sockets).forEach(id => {
+                const ws = sockets[id];
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ event: 'updatePosition', data: returnData }));
+                } else {
+                    console.log(`Socket for player ${id} not found or not open.`);
+                }
+            });
+        }
+    })
+},100,0);
 
 const messageRateLimit = 5;
 const lastMessageTimestamps = {};
@@ -49,7 +92,6 @@ function handleConnection(ws, broadcastExceptSender) { // Adjusted to receive br
             ws.send(JSON.stringify({ event: 'spawn', data: players[id] }));
         }
     }
-    ws.on ('updateAnimation',handleAnimation);
     ws.on('message', (message) => {
         handleMessage(ws, message);
     });
@@ -68,8 +110,10 @@ function handleConnection(ws, broadcastExceptSender) { // Adjusted to receive br
 function handleMessage(ws,message) {
     const now = Date.now();
     const lastTimestamp = lastMessageTimestamps[ws.id] || 0;
-    if (now - lastTimestamp <1000/messageRateLimit) {
-        return;
+    // Example of dynamic rate limiting based on server load or message type
+    const rateLimit = getDynamicRateLimit(message);
+    if (now - lastTimestamp < rateLimit) {
+        return; // Skip processing this message
     }
     lastMessageTimestamps[ws.id] = now;
     try {
@@ -77,20 +121,16 @@ function handleMessage(ws,message) {
         const data = JSON.parse(message);
         switch (data.event) {
             case 'updateAnimation':
-                handleAnimation(data);
+                handleAnimation(ws,data);
                 break;
             case 'updatePosition':
                 
-                handlePosition(data)
+                handlePosition(ws,data)
+                break;
+            case 'fireBullet':
+                handleShooting(ws,data);
                 break;
             case 'join':
-                break;
-            case 'movement':
-                
-                handleMovement(data);
-                break;
-            case 'action':
-                handleAction(data);
                 break;
             // Add more cases for different message types
             default:
@@ -99,7 +139,7 @@ function handleMessage(ws,message) {
         console.error('Error parsing message:', error);
     }
 }
-function handlePosition(data) {
+function handlePosition(ws,data) {
     try {
         const playerId = data.data.id;
         const position = data.data.position;
@@ -126,7 +166,7 @@ function handlePosition(data) {
         console.error('Error handling position:', error);
     }
 }
-function handleAnimation(data) {
+function handleAnimation(ws,data) {
     const playerId = data.data.id;
     const animatorData = data.data.animator;
     if (players[playerId]) {
@@ -151,15 +191,79 @@ function handleAnimation(data) {
         console.log(`Player with ID ${playerId} not found.`);
     }
 }
-function handleMovement(data) {
-    // Implement logic to handle player movement
+function handleShooting(ws,data) {
+    const playerId = data.playerID;
+    var bullet = new Bullet();
+    bullet.name = "Bullet";
+    bullet.position.x = data.bulletdata.position.x;
+    bullet.position.y = data.bulletdata.position.y;
+    bullet.direction.x = data.bulletdata.direction.x;
+    bullet.direction.y = data.bulletdata.direction.y;
+
+    bullets.push(bullet);
+
+    var returnData = {
+        event: 'serverSpawn',
+        data: {
+            id: bullet.id,
+            name: bullet.name,
+            position: {
+                x: bullet.position.x,
+                y: bullet.position.y
+            },
+            direction: {
+                x: bullet.direction.x,
+                y: bullet.direction.y
+            }
+        }
+    }
+    ws.send(JSON.stringify(returnData));
+    broadcastExceptSender(playerId, returnData);
 }
 
-function handleAction(data) {
-    // Implement logic to handle player actions
-}
 //=====UTILITY FUNCTIONS======
+function getCurrentServerLoad() {
+    // Let's assume it returns a value between 0 (no load) and 1 (maximum load)
+    return sockets.length / 100; // Example: if you consider 100 clients as max load
+}
 
+function getDynamicRateLimit(message) {
+    // Parse the message to determine its type
+    // Assuming message is already a parsed object or adjust as necessary
+    const messageType = message.type; // Example: 'updatePosition', 'chatMessage', etc.
 
+    // Get current server load
+    const serverLoad = getCurrentServerLoad();
+
+    // Define base rate limits for different message types (in milliseconds)
+    const baseRateLimits = {
+        'updatePosition': 1, // Allow position updates every 50ms under normal conditions
+        'chatMessage': 500, // Throttle chat messages to every 1 second
+        'default': 1 // Default rate limit for other messages
+    };
+
+    // Adjust the rate limit based on server load
+    // Example: double the rate limit under maximum load
+    const loadAdjustedRateLimit = baseRateLimits[messageType] ? baseRateLimits[messageType] * (1 + serverLoad) : baseRateLimits['default'] * (1 + serverLoad);
+
+    return loadAdjustedRateLimit;
+}
+
+function interval(func, wait, times) {
+    var interv = function(w,t) {
+        return function() {
+            if(typeof t === "undefined" || t-- > 0) {
+                setTimeout(interv, w);
+                try {
+                    func.call(null);
+                } catch(e) {
+                    t = 0;
+                    throw e.toString();
+                }
+            }
+        };
+    }(wait,times);
+    setTimeout(interv, wait);
+}
 
 module.exports = { initializeSocket };
