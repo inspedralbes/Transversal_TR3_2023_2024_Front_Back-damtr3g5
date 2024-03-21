@@ -79,12 +79,15 @@ app.get("/getData",async (req, res) => {
     }
     res.json(data);
 });
-app.post("/changeParams",(req,res)=>{
-    const collection = req.body.collection
-    const param = req.body.param
-    const newValue = req.body.newValue
+app.post("/changeParam",(req,res)=>{
+    const collection = req.query.collection
+    const newValue = req.body
+    console.log(newValue, collection);
     const id = req.body.id
-    controladora.changeValueGeneric(id,collection,param,newValue);
-    res.json({'collection':collection,'parameter':param,'value':newValue});
+    if(collection === "Character"){
+        controladora.changeCharacterParameters(id, newValue);
+    }else if(collection === "Weapons"){
+        controladora.changeWeaponParameters(id, newValue);
+    }
+    res.json({'collection':collection,'nuevo':newValue});
 })
-

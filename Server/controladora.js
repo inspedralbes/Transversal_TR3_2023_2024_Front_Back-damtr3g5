@@ -142,14 +142,23 @@ async function changeSkinParameters(id, parameter, newSkin) {
         console.log(err.stack);
     }
 }
-function changeCharacterParameters(id, parameter, newValue) {
-    const personaje = mongo.getCollection("Character", { "_id": new ObjectId(id) })[0];
-    personaje[parameter] = newValue;
+
+async function changeCharacterParameters(id, newValues) {
+    let personaje = await mongo.getElement("Character", { "_id": new ObjectId(id) });
+    for (let key in newValues) {
+        if (newValues.hasOwnProperty(key) && personaje.hasOwnProperty(key)) {
+            personaje[key] = newValues[key];
+        }
+    }
     mongo.updateElement("Character", "_id", new ObjectId(id), personaje);
 }
-function changeWeaponParameters(id, parameter, newValue) {
-    const personaje = mongo.getCollection("Weapon", { "_id": new ObjectId(id) })[0];
-    personaje[parameter] = newValue;
+async function changeWeaponParameters(id, newValues) {
+    const personaje = await mongo.getElement("Weapon", { "_id": new ObjectId(id) });
+    for (let key in newValues) {
+        if (newValues.hasOwnProperty(key) && personaje.hasOwnProperty(key)) {
+            personaje[key] = newValues[key];
+        }
+    }
     mongo.updateElement("Weapon", "_id", new ObjectId(id), personaje);
 }
 async function objectData(collection, char) {

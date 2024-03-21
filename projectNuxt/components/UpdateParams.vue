@@ -8,27 +8,73 @@ const props = defineProps({
     }
 });
 const { data } = props;
+console.log(data);
 
 let char = ref({})
-char.value = {...data}
+char.value = { ...data }
 
 const id: string = char.value._id;
 delete char.value.skins;
 delete char.value._id;
+delete char.value.name;
 console.log(id);
 
 const llaves = Object.keys(char.value);
 const valores = Object.values(char.value);
 const items = {};
-for (let i = 1; i < llaves.length; i++) {
-    items[llaves[i].toUpperCase()] = valores[i];
+for (let i = 0; i < llaves.length; i++) {
+    items[llaves[i].toUpperCase()] = valores[i].toString();
 }
+const newItem = ref({})
+newItem.value = { ...items }
 const itemToAdd = ref(items);
+function checkChanges(object1: Object, object2: Object) {
+    const keys1 = Object.keys(object1);
+    const keys2 = Object.keys(object2);
 
+    if (keys1.length !== keys2.length) {
+        return false;
+    }
 
+    for (let key of keys1) {
+        if (object1[key] !== object2[key]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+function bodyCreate() {
+    const body = {
+        id: id,
+        ...itemToAdd.value
+    };
+
+    const lowercaseBody = {};
+    Object.keys(body).forEach(key => {
+        lowercaseBody[key.toLowerCase()] = key === 'id' ? body[key] : parseFloat(body[key]);
+    });
+
+    return lowercaseBody;
+}
+
+function collection(object1: Object) {
+    const keys1 = Object.keys(object1);
+    let char = keys1.some((key) => key === 'hp');
+    if (char) {
+        return 'Character';
+    } else {
+        return 'Weapons';
+    }
+}
 async function addSkin() {
-    await $fetch(URL + '/changeParams', {
+    const body = bodyCreate()
+    await $fetch(URL + `/changeParam?collection=${collection(itemToAdd.value)}`, {
         method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
     }).catch((error) => {
         console.log(error);
     }).then((result) => {
@@ -36,7 +82,6 @@ async function addSkin() {
         reloadNuxtApp();
     });
 }
-var window = false;
 </script>
 <template>
     <v-card>
@@ -51,7 +96,8 @@ var window = false;
                         <v-col>
                             <v-text-field v-for="(value, key) in itemToAdd" :key="key" v-model="itemToAdd[key]"
                                 :label="key" type="text"></v-text-field>
-                            <v-btn @click="addSkin" color="primary">Save</v-btn>
+                            <v-btn @click="addSkin" color="primary"
+                                :disabled="checkChanges(itemToAdd, newItem)">Update</v-btn>
                         </v-col>
                     </v-row>
                 </v-col>
