@@ -69,29 +69,31 @@ function initializeSocket(server) {
     const wss = new WebSocket.Server({ server });
 
     wss.on('connection', function(ws) {
-        handleConnection(ws, broadcastExceptSender); // Pass broadcastExceptSender as an argument
+        handleConnection(ws, broadcastExceptSender);
     });
 }
 
-function handleConnection(ws, broadcastExceptSender) { // Adjusted to receive broadcastExceptSender
-    ws.id = uuid(); // It's better to assign id before using it
+//INICIALIZACIÓN DE CONEXIÓN
+function handleConnection(ws, broadcastExceptSender) { 
+    ws.id = uuid(); 
     var player = new Player();
     var playerId = player.id;
     players[playerId] = player;
-    sockets[ws.id] = ws; // Use ws.id since it's now available
+    sockets[ws.id] = ws; 
     console.log('Client connected');
 
-    //NOTIFY PLAYER REGISTRATION
+    //NOTIFICAR REGISTRO
     ws.send(JSON.stringify({ event: 'register', data: {id: playerId} }));
     ws.send(JSON.stringify({event: 'spawn', data: player}));
     broadcastExceptSender(ws.id, { event: 'spawn', data: player });
 
-    //Inform client about every other client in the game
+    //INFORMAR SOBRE OTROS JUGADORES
     for (var id in players) {
         if (id !== playerId) {
             ws.send(JSON.stringify({ event: 'spawn', data: players[id] }));
         }
     }
+    //MENSAJES
     ws.on('message', (message) => {
         handleMessage(ws, message);
     });
@@ -99,21 +101,20 @@ function handleConnection(ws, broadcastExceptSender) { // Adjusted to receive br
     ws.on('close', () => {
         console.log('Client disconnected');
         delete players[playerId];
-        delete sockets[ws.id]; // Use ws.id here as well
+        delete sockets[ws.id]; 
         broadcastExceptSender(ws.id, { event: 'disconnected', data: { id: playerId } });
     });
 }
 
-//Positional data from client
 
 
+//MANEJAR OBTENCIÓN DE MENSAJES
 function handleMessage(ws,message) {
     const now = Date.now();
     const lastTimestamp = lastMessageTimestamps[ws.id] || 0;
-    // Example of dynamic rate limiting based on server load or message type
     const rateLimit = getDynamicRateLimit(message);
     if (now - lastTimestamp < rateLimit) {
-        return; // Skip processing this message
+        return;
     }
     lastMessageTimestamps[ws.id] = now;
     try {
@@ -130,9 +131,9 @@ function handleMessage(ws,message) {
             case 'fireBullet':
                 handleShooting(ws,data);
                 break;
-            case 'join':
+            case 'collisionDestroyed':
+                handleCollision(ws,data);
                 break;
-            // Add more cases for different message types
             default:
         }
     } catch (error) {
@@ -145,10 +146,7 @@ function handlePosition(ws,data) {
         const position = data.data.position;
         
         if (players[playerId]) {
-            // Directly update player position without validation
             players[playerId].position = position;
-            
-            // Prepare updated position data
             const newPositionData = {
                 event: 'updatePosition',
                 data: {
@@ -157,7 +155,7 @@ function handlePosition(ws,data) {
                 }
             };
             
-            // Broadcast the updated position to all clients except the sender
+            
             broadcastExceptSender(playerId, newPositionData);
         } else {
             console.log(`Player with ID ${playerId} not found.`);
@@ -195,6 +193,7 @@ function handleShooting(ws,data) {
     const playerId = data.playerID;
     var bullet = new Bullet();
     bullet.name = "Bullet";
+    bullet.activator = data.bulletdata.activator;
     bullet.position.x = data.bulletdata.position.x;
     bullet.position.y = data.bulletdata.position.y;
     bullet.direction.x = data.bulletdata.direction.x;
@@ -206,6 +205,7 @@ function handleShooting(ws,data) {
         event: 'serverSpawn',
         data: {
             id: bullet.id,
+            activator: bullet.activator,
             name: bullet.name,
             position: {
                 x: bullet.position.x,
@@ -219,6 +219,17 @@ function handleShooting(ws,data) {
     }
     ws.send(JSON.stringify(returnData));
     broadcastExceptSender(playerId, returnData);
+}
+function handleCollision(ws,data) {
+    console.log('Collsion with bullets id: '+data.id);
+    //PARA MINIMIZAR ERRORES DE DUPLICADOS
+    let returnBullets = bullets.filter(bullet => {
+        return bullet.id == data.id;
+    });
+
+    returnBullets.forEach(bullet => { 
+        bullet.isDestroyed = true;  
+     }) ;
 }
 
 //=====UTILITY FUNCTIONS======
