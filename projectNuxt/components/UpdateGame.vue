@@ -6,45 +6,47 @@ const { data, pending, error, refresh } = await useFetch(URL + '/gameparams', {
     method: 'GET'
 })
 
-let char = ref({})
 
-char.value = { ...data.value }
+let char = { ...data.value }
+const id: string = char._id;
+delete char._id;
 
-const id: string = char.value._id;
-delete char.value._id;
 
-const llaves = Object.keys(char.value);
-const valores = Object.values(char.value);
+const llaves = Object.keys(char);
+const valores = Object.values(char);
 const items = {};
+
 for (let i = 0; i < llaves.length; i++) {
     items[llaves[i]] = valores[i];
 }
-const newItem = ref({})
-newItem.value = { ...items }
-const itemToAdd = ref({...items});
+
+let newItem = ref({})
+newItem = _.cloneDeep(items);
+
+let itemToAdd = ref(_.cloneDeep(items));
+
 function checkChanges(object1: Object, object2: Object) {
-      for (let key in object1) {
+    for (let key in object1) {
         for (let paramKey in object1[key]) {
-          if (object1[key][paramKey] !== object2[key][paramKey]) {
-            return false; // Si hay un cambio, devolver true
-          }
+            if (object1[key][paramKey] !== object2[key][paramKey]) {
+                return false; // Si hay un cambio, devolver true
+            }
         }
-      }
-      return true; // Si no hay cambios, devolver false
     }
+    return true; // Si no hay cambios, devolver false
+}
 function bodyCreate() {
-    const body = {
-        id: id,
-        ...itemToAdd.value
-    };
-
     const lowercaseBody = {};
-    Object.keys(body).forEach(key => {
-        lowercaseBody[key.toLowerCase()] = key === 'id' ? body[key] : parseFloat(body[key]);
+    Object.keys(itemToAdd.value).forEach(key => {
+        lowercaseBody[key] = {}; // Inicializa lowercaseBody[key] como un objeto vacío
+        Object.keys(itemToAdd.value[key]).forEach(paramKey => {
+            lowercaseBody[key][paramKey] = parseFloat(itemToAdd.value[key][paramKey]);
+        });
     });
-
+    lowercaseBody.id = id;
     return lowercaseBody;
 }
+
 
 async function addSkin() {
     const body = bodyCreate()
@@ -64,7 +66,6 @@ async function addSkin() {
 </script>
 <template>
     <v-card>
-        {{ newItem }}{{ itemToAdd }}
         <v-card-title>
             <h1>Game Parameters</h1>
         </v-card-title>
@@ -74,13 +75,15 @@ async function addSkin() {
                 <v-col style="display: flex; justify-content: center; align-items: center;" cols="9">
                     <v-row>
                         <v-col>
-                            <div v-for="(value, key) in newItem" :key="key">
+                            <div v-for="(value, key) in itemToAdd" :key="key">
                                 <h2 style="margin-bottom: 10px;">{{ key.toUpperCase() }}</h2>
-                                <div v-for="(paramValue, paramKey) in newItem[key]" :key="paramKey">
-                                    <span>{{ paramKey.replace('_',' ').toUpperCase() }}</span><v-text-field v-model="newItem[key][paramKey]" :label="paramKey.replace('_',' ').toUpperCase()" type="text"></v-text-field>
+                                <div v-for="(paramValue, paramKey) in itemToAdd[key]" :key="paramKey">
+                                    <span>{{ paramKey.replace('_', ' ').toUpperCase() }}</span><v-text-field
+                                        v-model="itemToAdd[key][paramKey]"
+                                        :label="paramKey.replace('_', ' ').toUpperCase()" type="text"></v-text-field>
                                 </div>
-                                
-                            </div>                            
+
+                            </div>
                             <v-btn @click="addSkin" color="primary"
                                 :disabled="checkChanges(newItem, itemToAdd)">Update</v-btn>
                         </v-col>

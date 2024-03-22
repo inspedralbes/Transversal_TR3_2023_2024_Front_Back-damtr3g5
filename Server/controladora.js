@@ -256,14 +256,9 @@ async function getGameParams() {
 }
 async function updateGameParams(newValues) {
     try {
-        const personaje = await mongo.getCollection("Game")[0];
-
-        for (let key in newValues) {
-            if (newValues.hasOwnProperty(key) && personaje.hasOwnProperty(key)) {
-                personaje[key] = newValues[key];
-            }
-        }
-        const document = mongo.updateElement("Game", "_id", new ObjectId(personaje._id), data);
+        const id = newValues.id;
+        delete newValues.id;
+        const document = mongo.updateElement("Game", "_id", new ObjectId(id), newValues);
     } catch (err) {
         console.log(err.stack);
     }
