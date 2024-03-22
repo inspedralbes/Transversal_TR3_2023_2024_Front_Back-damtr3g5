@@ -8,6 +8,7 @@ var Bullet = require('./Classes/Bullet.js');
 var players = [];
 var sockets = [];
 var bullets = [];
+var zombies = []
 
 //Updates
 setInterval (() => {
@@ -16,17 +17,7 @@ setInterval (() => {
 
         //Remove
         if (isDestroyed) {
-            var index = bullets.indexOf(bullet);
-            if (index > -1) {
-                bullets.splice(index, 1);
-
-                var returnData = {
-                    id: bullet.id
-                }
-                for (var id in players) {
-                    sockets[id].send(JSON.stringify({ event: 'serverUnSpawn', data: returnData }));
-                }
-            }
+            desspawnBullet(bullet);
 
         }
         else {
@@ -49,10 +40,34 @@ setInterval (() => {
         }
     })
 },100,0);
+setInterval(() => {
+    zombies.forEach(zombie => {
+        players.forEach(player => {
+            if (isInRange(zombie.position, player.position,10)) {
+                handleDealDamage(player.id, zombie.attackDamage);
+            }
+        });
+    });
+}, 1000);
 
 const messageRateLimit = 5;
 const lastMessageTimestamps = {};
+function despawnBullet(bullet = Bullet) {
+    console.log("Destroying Bulle ("+`bullet.id`+")");
+    var index = bullets.indexOf(bullet);
+            if (index > -1) {
+                bullets.splice(index, 1);
 
+                var returnData = {
+                    id: bullet.id
+                }
+                for (var id in players) {
+                    
+                    sockets[id].send(JSON.stringify({ event: 'serverUnSpawn', data: returnData }));
+                }
+            }
+
+}
 //=====WEBSOCKET FUNCTIONS======
 function broadcastExceptSender(senderId, data) {
     for (let id in sockets) {
@@ -133,6 +148,9 @@ function handleMessage(ws,message) {
                 break;
             case 'collisionDestroyed':
                 handleCollision(ws,data);
+                break;
+            case 'dealDamage':
+                handleDealDamage(ws,data);
                 break;
             default:
         }
@@ -228,8 +246,69 @@ function handleCollision(ws,data) {
     });
 
     returnBullets.forEach(bullet => { 
-        bullet.isDestroyed = true;  
+        let zombieHit = false;
+        for (var id in zombies) {
+            let zombie = zombies[id];
+            let distance = bullet.position.Distance(plauyer.position);
+            if (distance < 0.65) {
+                zombieHit = true;
+                let isDead = zombie.dealDamage(bullet.damage);
+                if (isDead) {
+                    let returnData = {
+                        event: 'zombieDead',
+                        data: {
+                            id: zombie.id
+                        }
+                    }
+                    for (var id in players) {
+                        sockets[id].send(returnData);
+                    }
+
+                }
+                else {
+                    let returnData = {
+                        event: 'zombieDamaged',
+                        data: {
+                            id: zombie.id,
+                            health: zombie.health
+                        }
+                    }
+                    for (var id in players) {
+                        sockets[id].send(returnData);
+                    }
+                }
+                this.despawnBullet(bullet);
+            }
+        }
+        if (!zombieHit) {
+            bullet.isDestroyed = true; 
+        }
+         
      }) ;
+}
+function handleDealDamage(playerId, damage) {
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+        let isDead = player.dealDamage(damage);
+        if (isDead) {
+            console.log("player with id: "+playerId+" is dead");
+            let returnData = {
+                event: 'playerDead',
+                data: {
+                    id: playerId
+                }
+            }
+            sockets[playerId].send(returnData);
+            broadcastExceptSender(playerId, returnData);
+        } else {
+            console.log("" + playerId + " has " + player.health + " health left.");
+            // Notify about damage
+            const ws = sockets[playerId];
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ event: 'playerDamaged', data: { id: playerId, health: player.health } }));
+            }
+        }
+    }
 }
 
 //=====UTILITY FUNCTIONS======
@@ -258,6 +337,13 @@ function getDynamicRateLimit(message) {
     const loadAdjustedRateLimit = baseRateLimits[messageType] ? baseRateLimits[messageType] * (1 + serverLoad) : baseRateLimits['default'] * (1 + serverLoad);
 
     return loadAdjustedRateLimit;
+}
+
+function isInRange(position1, position2, range) {
+    const dx = position1.x - position2.x;
+    const dy = position1.y - position2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance <= range;
 }
 
 function interval(func, wait, times) {

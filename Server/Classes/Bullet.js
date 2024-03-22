@@ -8,6 +8,7 @@ module.exports = class Bullet extends ServerObject {
         this.speed = 0.5;
         this.isDestroyed = false;
         this.activator = '';
+        this.damage = new Number(10);
     }
 
     onUpdate() {
