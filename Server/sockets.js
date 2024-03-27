@@ -53,7 +53,7 @@ setInterval(() => {
 const messageRateLimit = 5;
 const lastMessageTimestamps = {};
 function despawnBullet(bullet = Bullet) {
-    console.log("Destroying Bulle ("+`bullet.id`+")");
+    console.log("Destroying Bullet ("+`bullet.id`+")");
     var index = bullets.indexOf(bullet);
             if (index > -1) {
                 bullets.splice(index, 1);
